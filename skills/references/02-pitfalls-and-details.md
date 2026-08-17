@@ -23,7 +23,7 @@
 - [ ] 重置 `scale`、`position`、`UIOpacity`——入场动效常改这些，复用残留。
 - [ ] 取消 `Scheduler`/自定义定时器（组件在 item 上时 `unscheduleAllCallbacks`）。
 - [ ] 清理/重绑事件监听：点击必须在节点创建时绑一次、回调读 dataIndex；**不要**每次绑定 on/off 一对（高频滚动下这是分配与泄漏源头）。
-- [ ] 异步回调守卫：`renderItemFn` 里发起的异步加载（头像、远程图）回来时必须检查`node.isValid` 且 dataIndex 仍是发起时的 index，否则写错到已复用的节点上（闪烁旧图）。
+- [ ] 异步回调守卫：`renderItemFn` 里发起的异步加载（头像、远程图）回来时必须检查 `node.isValid` 且 dataIndex 仍是发起时的 index，否则写错到已复用的节点上（闪烁旧图）。
 - [ ] Label/RichText 长文本清空或复用时立即覆写——同帧残留一帧旧内容是复用闪烁主因。
 - [ ] 池本身上限：长期不封顶的池在"大量一次性模板"场景（活动页）会驻留内存，可设 `maxPoolSize` 超出即 destroy。
 
@@ -33,13 +33,13 @@
 - [ ] 若必须读世界坐标（初始化测视口边界）：改锚点/改父节点后世界矩阵**下一帧**才更新，需 `scheduleOnce`/下一帧再读（等一帧即为此）。用 `getScrollOffset()` 读滚动量则完全绕开该问题。
 - [ ] 视口边界计算要带 anchor 修正（2.x 移植常见 bug：右/上边缘忘记乘 `(1-anchor)` 导致"列表最右一列不显示"）。
 - [ ] `pixelAlign`：取整后再 setPosition。
-- [ ] content 尺寸不能小于视口（references/01 §10）；尺寸变化后的边界重算由引擎`SIZE_CHANGED` 监听自动完成，**无需手动触发**。
+- [ ] content 尺寸不能小于视口（references/01 §10）；尺寸变化后的边界重算由引擎 `SIZE_CHANGED` 监听自动完成，**无需手动触发**。
 
 ## 3. 组件与布局冲突
 
 - [ ] content 上不挂 `Layout`（双写位置 + 增删节点触发全量重排）。
 - [ ] content 上慎挂 `Widget`：ALWAYS 模式的对齐每帧改 content 位置，与滚动冲突；需要居中效果用列表自己的"内容不足一屏时居中"逻辑。
-- [ ] 想保留编辑器所见即所得：item 模板Prefab 内部随便用 Layout（仅模板内部，一次性排版），list 层不介入。
+- [ ] 想保留编辑器所见即所得：item 模板 Prefab 内部随便用 Layout（仅模板内部，一次性排版），list 层不介入。
 
 ## 4. 事件与交互
 
@@ -47,7 +47,7 @@
 - [ ] 回调签名统一 `(node, index)`，index 从槽位 dataIndex 读，闭包不捕获循环变量。
 - [ ] 嵌套列表：子列表按**起手主轴方向**认领手势；子列表该轴滚到头后放行给父列表（反向也要放行）。引擎 ScrollView 间嵌套还需注意 `cancelInnerEvents` 的吞触。
 - [ ] 下拉刷新/加载更多用一次性边界事件（`SCROLL_TO_TOP/BOTTOM`）+ 状态锁，不要用 SCROLLING 高频事件里做阈值判断又忘记去抖。
-- [ ] item 内嵌 `Button` 时防双触发：触摸事件沿父链冒泡，Button 的 CLICK 与 item 根的TOUCH_END 都会响应——二选一（整面点击用 item 根的监听就不放 Button，或局部可点区只靠 Button 的 click）。
+- [ ] item 内嵌 `Button` 时防双触发：触摸事件沿父链冒泡，Button 的 CLICK 与 item 根的 TOUCH_END 都会响应——二选一（整面点击用 item 根的监听就不放 Button，或局部可点区只靠 Button 的 click）。
 - [ ] 自定义按压态要同时监听 `TOUCH_CANCEL`：ScrollView 默认 `cancelInnerEvents` 为 true，判定为滚动手势时会给子节点补发 CANCEL，只监听 END 的按压效果会卡在按下外观。
 
 ## 5. 测量与动态尺寸
@@ -62,13 +62,13 @@
 
 - `Sorting2D`：是 3.8.7 新增的接口，可以通过 `import { Sorting2D} from 'cc'` 引入，3.8.6 是没有的。3.8.6 上做"分层合批"只能上代理方案（见 references/03 分层渲染分析）或 UIStaticBatch/合图集。完整实现在 3.8.0–3.8.6 上运行会自动退化为无分层 DC 优化。
 - 3.x 节点**没有 zIndex**（2.x 有）：层级 = 兄弟序 + 树序。分层渲染要自管排序键（代理方案用合成排序键 rZIndex + 手动 sort children 替代）。
-- 2.x 的 `cc.ScrollView` 事件常量风格（`scroll-view-scrolling` 字符串）在 3.x 用`ScrollView.EventType.SCROLLING`；直接用 `"scrolling"` 字符串也能对上（枚举值即该字符串），但新代码用枚举。
+- 2.x 的 `cc.ScrollView` 事件常量风格（`scroll-view-scrolling` 字符串）在 3.x 用 `ScrollView.EventType.SCROLLING`；直接用 `"scrolling"` 字符串也能对上（枚举值即该字符串），但新代码用枚举。
 
 ## 7. 平台注意
 
 - `requestAnimationFrame`：web/原生/小游戏都有 adapter 提供，**不是**可用性问题；不建议用在列表逻辑的原因是生命周期归属（组件销毁要手动停）与规模成本（每代理一条循环）。组件 `update()` 是归属正确、随组件启停的默认选择。
 - 微信小游戏：真机调试注意 `console.log`：完整实现常在初始化时打印槽位日志，真机上是纯损耗，上线前要删；分包下 item Prefab 所在 bundle 需先加载。
-- 高分屏抖动：`pixelAlign` + 设计分辨率缩放（View scale）下取整应取UI 坐标系（content 本地）而不是物理像素。
+- 高分屏抖动：`pixelAlign` + 设计分辨率缩放（View scale）下取整应取 UI 坐标系（content 本地）而不是物理像素。
 
 ## 8. 性能验收自测（交付前跑一遍）
 

@@ -33,7 +33,7 @@ const itemAnchorY = itemTf.anchorY;
 const y = topInLocal - prefix[i] - size[i] * (1 - itemAnchorY); // 中心锚点时即 -(prefix + size/2) 平移到顶边系
 ```
 
-横向同理：`leftInLocal = -ct.anchorX * ct.width`，`x = leftInLocal + prefix[i] + size[i] * itemAnchorX`。锚点数学是虚拟列表移植 bug 的重灾区（2.x 移植常栽在右/上边缘的anchor 修正上）；全部换算收敛到上面两个公式可避免。
+横向同理：`leftInLocal = -ct.anchorX * ct.width`，`x = leftInLocal + prefix[i] + size[i] * itemAnchorX`。锚点数学是虚拟列表移植 bug 的重灾区（2.x 移植常栽在右/上边缘的 anchor 修正上）；全部换算收敛到上面两个公式可避免。
 
 **像素对齐**：`Math.round` 后再 setPosition，防止子像素采样带来的纹理闪烁与额外的顶点重排成本（这也是 `pixelAlign` 选项的由来）。
 
@@ -86,7 +86,7 @@ newFirst ≠ firstIndex 时：
 - 旋转后**只重绑 |diff| 个节点**，稳定慢滚时每帧通常只有 0~1 个节点需要
 取池/回池/调 renderItem，这是"滚动时近零开销"的关键。
 - 多模板时同步旋转 `slotTypes[i]`，重绑时若类型不符才换池取节点（即重绑时按 currentPrefabIndex 判断的逻辑）。
-- 旋转不改兄弟序也能正确显示（item 不重叠时 z 序无关）；若 item 有投影/跨item悬浮元素需要严格顺序，用 `setSiblingIndex` 显式排一次。
+- 旋转不改兄弟序也能正确显示（item 不重叠时 z 序无关）；若 item 有投影/跨 item 悬浮元素需要严格顺序，用 `setSiblingIndex` 显式排一次。
 
 ## 6. 对象池
 
@@ -110,7 +110,7 @@ private _putNode(node: Node, type: number) {
 ```
 
 - `active=false` + 脱离渲染树后，批处理器对该节点整棵子树直接跳过，这就是池化省 CPU 的依据。
-- `cc.NodePool` 在 3.8.6 可用（属 2.x 兼容层）：单实例对应一种模板，`put` 自动`removeFromParent` 并调 `unuse()`，`get` 空池返回 null。多模板场景要么每模板一个实例，要么用上面的数组池。
+- `cc.NodePool` 在 3.8.6 可用（属 2.x 兼容层）：单实例对应一种模板，`put` 自动 `removeFromParent` 并调 `unuse()`，`get` 空池返回 null。多模板场景要么每模板一个实例，要么用上面的数组池。
 - 引擎另有通用池 `js.Pool`：`import { js } from 'cc'` 后用 `js.Pool`（引擎内部也有此类用法）。注意它**不是** cc 顶层导出，`import { Pool } from 'cc'` 拿不到。
 - 池是列表组件实例私有的：同一模板被多个列表使用时各自实例化；要跨列表共享节点，需把池提升到独立的池管理器。
 - 池**不做状态重置**——重置责任在回收/绑定流程（见 references/02 清单），`NodePool` 的 unuse/reuse 钩子同样只是回调时机，不替你清理。
@@ -128,7 +128,7 @@ private _putNode(node: Node, type: number) {
 8. [可选] 入场动效
 ```
 
-点击事件在**节点创建时绑定一次**，回调里读 dataIndex——而不是每次绑定on/off（避免闭包与监听器泄漏；这是虚拟列表最常见的复用 bug 来源）。
+点击事件在**节点创建时绑定一次**，回调里读 dataIndex——而不是每次绑定 on/off（避免闭包与监听器泄漏；这是虚拟列表最常见的复用 bug 来源）。
 
 ## 8. 实测尺寸闭环（不等高必备）
 
@@ -175,7 +175,7 @@ else if (v > 1000) minIntervalMs = 33;  // 快速：≈30fps
 if (now - this._lastRefreshMs < minIntervalMs) return;   // 跳过本帧
 ```
 
-- **正确性铁律**：任何降频都必须配"静止兜底"——位置连续 N 帧不变（或`SCROLL_ENDED` 事件）时强制刷一次，否则停留位置显示的是旧窗口（用 onScrollEnded 兜底；轮询方案里"位置静止且刚经历降频"同理）。
+- **正确性铁律**：任何降频都必须配"静止兜底"——位置连续 N 帧不变（或 `SCROLL_ENDED` 事件）时强制刷一次，否则停留位置显示的是旧窗口（用 onScrollEnded 兜底；轮询方案里"位置静止且刚经历降频"同理）。
 - **低性能自动降级**：统计每次刷新自身耗时（保留 5 帧），≥3 帧超 16ms →minIntervalMs 下限提到 33ms。设备自适应，无需机型白名单。
 - **取舍**：降频是"少做"，本架构主体（二分定位 + O(diff) 重绑）是"做得快"。先把单次刷新压到 1~2ms，多数设备已无需降频；仅低端机叠加此层。降频的视觉代价：快速滚动经过的区域内容更不完整（用户看不清，可接受）。
 - **排障顺序（先做快、再少做）**：若单次 `_updateWindow` 实测 >2ms（等高）或 >4ms（不等高），先怀疑定位退化成了 O(n)（遍历累计高度 / 全量回收重建），而不是急着加降频——降频救不了 O(n) 的底子。坊间"每次刷新要 30ms"的文章，根因正是 O(n) 扫描而非刷新频率。
@@ -203,7 +203,7 @@ contentTf.contentSize = max(contentMainSize, viewportSize)  // 不小于视口
 ```
 
 - 取 max 的原因：数据不足一屏时保证回弹/边界计算正常。
-- 边界重算时机（易误解）：content/view 的 UITransform 尺寸变化由引擎监听`NodeEventType.SIZE_CHANGED` **自动**重算边界（注册在 onEnable，start() 里也有一处初始计算）；运行期**替换content 节点引用**才走 content setter。改了 contentSize 却发现滚动范围不对时，通常原因不是"没触发重算"，而是改的不是 content 的 UITransform、或 ScrollView 组件当时未启用（onEnable 才挂监听）。
+- 边界重算时机（易误解）：content/view 的 UITransform 尺寸变化由引擎监听 `NodeEventType.SIZE_CHANGED` **自动**重算边界（注册在 onEnable，start() 里也有一处初始计算）；运行期**替换 content 节点引用**才走 content setter。改了 contentSize 却发现滚动范围不对时，通常原因不是"没触发重算"，而是改的不是 content 的 UITransform、或 ScrollView 组件当时未启用（onEnable 才挂监听）。
 
 ## 11. 常用功能挂接点
 

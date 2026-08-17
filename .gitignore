@@ -132,6 +132,8 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+.DS_Store
+
 # Cocos Creator
 /library/
 /temp/

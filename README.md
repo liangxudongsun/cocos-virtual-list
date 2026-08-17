@@ -32,7 +32,7 @@ examples/
 
 ## 怎么用
 
-将 `skills` 文件夹放到你的项目根目录下，然后直接向 Agent 提出疑问或需求需求：
+将 `skills` 文件夹放到你的项目根目录下，然后直接向 Agent 提出疑问或需求：
 
 - “基于 cocos-virtual-list，总结下实现一个高性能虚拟列表需要留意哪些点？”
 - “基于 cocos-virtual-list，修改 assets/virtual-list（替换为你的虚拟列表文件夹路径）的虚拟列表，让它支持不等高 item 的模式。”

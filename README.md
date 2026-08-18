@@ -2,6 +2,8 @@
 
 指导 Agent 如何打造 Cocos Creator 高性能虚拟列表的 Skill。
 
+> 💡 想尝试 Agent 的可以[来 workbuddy 薅羊毛](https://www.workbuddy.cn/events/invite?inviteCode=21331jsck) ， 新用户送 2600 积分，每天签到又送 100 积分，搭配 ds v4 flash 可以用很久很久。
+
 ## 它能帮你做什么
 
 - 在 `ScrollView` 里流畅渲染**成千上万条**数据，不卡顿、不爆内存。
